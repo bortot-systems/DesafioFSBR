@@ -1,0 +1,137 @@
+﻿@model DesafioFSBR.Models.Processo
+
+@{
+    ViewData["Title"] = "Editar";
+}
+
+<h1>Editar</h1>
+
+<h4>Processo</h4>
+<hr />
+<div class="row">
+    <div class="col-md-4">
+        <form asp-action="Edit">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+            <input type="hidden" asp-for="Id" />
+            <div class="form-group">
+                <label asp-for="NomeProcesso" class="control-label"></label>
+                <input asp-for="NomeProcesso" class="form-control" maxlength="100" />
+                <span asp-validation-for="NomeProcesso" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="NPU" class="control-label"></label>
+                <input asp-for="NPU" class="form-control" />
+                <span asp-validation-for="NPU" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="DataCadastro" class="control-label"></label>
+                <input asp-for="DataCadastro" class="form-control" disabled />
+                <span asp-validation-for="DataCadastro" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="DataVisualizacao" class="control-label"></label>
+                <input class="form-control" value="@Model.DataVisualizacaoFormatada" disabled />
+                <input type="hidden" asp-for="DataVisualizacao" value="@Model.DataVisualizacao" />
+                <span asp-validation-for="DataVisualizacao" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="UF"></label>
+                <select asp-for="UF" class="form-control" id="UF" onchange="getMunicipios()">
+                    <option value="">Selecione a UF</option>
+                    @if (ViewBag.UFs != null)
+                    {
+                        foreach (var uf in ViewBag.UFs as List<string>)
+                        {
+                            <option value="@uf">@uf</option>
+                        }
+                    }
+                    else
+                    {
+                        <option value="">Nenhuma UF disponível</option>
+                    }
+                </select>
+                <span asp-validation-for="UF" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="Municipio"></label>           
+                
+                <div id="municipio-container">
+                    @if (Model.Municipio != null)
+                    {                        
+                        <input asp-for="Municipio" class="form-control" id="Municipio" disabled />
+                        <input type="hidden" asp-for="Municipio" />
+                    }
+                    else
+                    {                        
+                        <select asp-for="Municipio" class="form-control" id="Municipio">
+                            <option value="">---</option>
+                        </select>
+                    }
+                </div>
+                
+            </div>
+            <br />
+            <div class="form-group">
+                <input type="submit" value="Salvar" class="btn btn-primary" />
+            </div>
+        </form>
+    </div>
+</div>
+
+<br />
+<div>
+    <a asp-action="Index">Voltar</a>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+
+    <script>
+        $(document).ready(function () {
+            
+            $('#UF').change(function () {
+                var uf = $(this).val();
+
+                if (uf) {
+                    
+                    var municipioContainer = $('#municipio-container');
+                    var municipioSelect = `
+                        <select name="Municipio" class="form-control" id="Municipio">
+                            <option value="">Carregando...</option>
+                        </select>`;
+                    municipioContainer.html(municipioSelect);
+                                       
+                    $.ajax({
+                        url: '@Url.Action("ObterMunicipios", "Processos")',
+                        type: 'GET',
+                        data: { uf: uf },
+                        success: function (data) {
+                            var municipioDropdown = $('#Municipio');
+                            municipioDropdown.empty();
+                            municipioDropdown.append('<option value="">Selecione um município</option>');
+
+                            if (data.length > 0) {
+                                $.each(data, function (index, municipio) {
+                                    var municipioFull = municipio.codigo + " - " + municipio.nome;
+                                    municipioDropdown.append('<option value="' + municipioFull + '">' + municipioFull + '</option>');
+                                });
+                            } else {
+                                municipioDropdown.append('<option value="">Nenhum município encontrado</option>');
+                            }
+                        },
+                        error: function () {
+                            alert('Erro ao carregar municípios');
+                        }
+                    });
+                } else {
+                    $('#municipio-container').html(`
+                        <select name="Municipio" class="form-control" id="Municipio">
+                            <option value="">Selecione um município</option>
+                        </select>
+                    `);
+                }
+            });
+        });
+    </script>
+
+}
